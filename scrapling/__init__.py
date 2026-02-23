@@ -20,8 +20,30 @@ _LAZY_IMPORTS = {
     "AsyncFetcher": ("scrapling.fetchers", "AsyncFetcher"),
     "StealthyFetcher": ("scrapling.fetchers", "StealthyFetcher"),
     "DynamicFetcher": ("scrapling.fetchers", "DynamicFetcher"),
+    # Cache
+    "CacheEntry": ("scrapling.cache", "CacheEntry"),
+    "CacheStats": ("scrapling.cache", "CacheStats"),
+    "CacheBackend": ("scrapling.cache", "CacheBackend"),
+    "MemoryCache": ("scrapling.cache", "MemoryCache"),
+    "DiskCache": ("scrapling.cache", "DiskCache"),
+    "CacheManager": ("scrapling.cache", "CacheManager"),
+    "get_default_cache": ("scrapling.cache", "get_default_cache"),
 }
-__all__ = ["Selector", "Fetcher", "AsyncFetcher", "StealthyFetcher", "DynamicFetcher"]
+__all__ = [
+    "Selector",
+    "Fetcher",
+    "AsyncFetcher",
+    "StealthyFetcher",
+    "DynamicFetcher",
+    # Cache
+    "CacheEntry",
+    "CacheStats",
+    "CacheBackend",
+    "MemoryCache",
+    "DiskCache",
+    "CacheManager",
+    "get_default_cache",
+]
 
 
 def __getattr__(name: str) -> Any:
@@ -35,4 +57,4 @@ def __getattr__(name: str) -> Any:
 
 def __dir__() -> list[str]:
     """Support for dir() and autocomplete."""
-    return sorted(__all__ + ["fetchers", "parser", "cli", "core", "__author__", "__version__", "__copyright__"])
+    return sorted(__all__ + ["fetchers", "parser", "cli", "core", "cache", "__author__", "__version__", "__copyright__"])
