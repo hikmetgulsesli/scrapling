@@ -90,7 +90,13 @@ shell = [
     "scrapling[fetchers]",
 ]
 all = [
-    "scrapling[ai,shell]",
+    "scrapling[ai,shell,dashboard]",
+]
+dashboard = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.32.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.7.0",
 ]
 
 [project.urls]
