@@ -24,7 +24,7 @@ class MetricsDatabase:
         """Get database connection."""
         if self._conn is None:
             self._conn = sqlite3.connect(
-                str(self.db_path), 
+                str(self.db_path),
                 check_same_thread=False  # Allow multi-threaded access
             )
             self._conn.row_factory = sqlite3.Row

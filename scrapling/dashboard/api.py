@@ -1,6 +1,6 @@
 """FastAPI application for scraper health monitoring dashboard."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated, Literal, Generator
 
@@ -28,7 +28,7 @@ def create_app(db_instance: MetricsDatabase | None = None) -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
-        allow_credentials=True,
+        allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
     )
@@ -78,7 +78,7 @@ def create_app(db_instance: MetricsDatabase | None = None) -> FastAPI:
         return HealthResponse(
             status="healthy" if db_status == "healthy" else "degraded",
             database=db_status,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
 
     @app.get("/api/events", response_model=EventLogResponse)

@@ -1,8 +1,9 @@
 """Logging utilities for scraper events."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import wraps
 from typing import Any, Callable, Literal
+from urllib.parse import urlparse
 
 from .database import get_database
 
@@ -26,9 +27,9 @@ def log_event(
             duration_ms=duration_ms,
             cached=cached,
         )
-    except Exception:
-        # Don't fail the scraper if logging fails
-        pass
+    except Exception as e:
+        # Don't fail the scraper if logging fails, but log the error
+        print(f"Error logging event: {e}")
 
 
 def log_fetch(
@@ -71,34 +72,43 @@ def log_error(
     log_event("error", domain, "error", message, duration_ms)
 
 
+def _extract_domain(url: str) -> str:
+    """Extract domain from URL using proper parsing."""
+    if not url:
+        return "unknown"
+    try:
+        parsed = urlparse(url)
+        return parsed.netloc if parsed.netloc else "unknown"
+    except Exception:
+        # Fallback to simple extraction
+        return url.split("/")[2] if "://" in url else url.split("/")[0]
+
+
 def timed_operation(event_type: Literal["fetch", "parse", "save"]) -> Callable:
     """Decorator to automatically log timing for operations."""
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            start = datetime.utcnow()
+            start = datetime.now(timezone.utc)
             try:
                 result = func(*args, **kwargs)
-                duration = (datetime.utcnow() - start).total_seconds() * 1000
+                duration = (datetime.now(timezone.utc) - start).total_seconds() * 1000
 
                 # Try to extract domain from args
                 domain = "unknown"
-                if args:
-                    url = args[0] if args else kwargs.get("url", "")
-                    if url:
-                        # Simple domain extraction
-                        domain = url.split("/")[2] if "://" in url else url.split("/")[0]
+                url = args[0] if args else kwargs.get("url", "")
+                if url:
+                    domain = _extract_domain(url)
 
                 log_event(event_type, domain, "success", None, duration, False)
                 return result
             except Exception as e:
-                duration = (datetime.utcnow() - start).total_seconds() * 1000
+                duration = (datetime.now(timezone.utc) - start).total_seconds() * 1000
                 domain = "unknown"
-                if args:
-                    url = args[0] if args else kwargs.get("url", "")
-                    if url:
-                        domain = url.split("/")[2] if "://" in url else url.split("/")[0]
+                url = args[0] if args else kwargs.get("url", "")
+                if url:
+                    domain = _extract_domain(url)
 
                 log_error(domain, str(e), duration)
                 raise
