@@ -18,9 +18,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Callable
-
-from typing_extensions import Self
+from typing import Any
 
 
 @dataclass
@@ -206,11 +204,12 @@ class AmazonAdaptor(BaseAdaptor):
 
     def _extract_availability(self, html: str) -> str | None:
         """Extract availability status."""
-        if "In Stock" in html or "in stock" in html.lower():
+        html_lower = html.lower()
+        if "in stock" in html_lower:
             return "In Stock"
-        if "Out of Stock" in html or "out of stock" in html.lower():
+        if "out of stock" in html_lower:
             return "Out of Stock"
-        if "Currently unavailable" in html:
+        if "currently unavailable" in html_lower:
             return "Currently unavailable"
         return None
 
@@ -345,7 +344,7 @@ class TwitterAdaptor(BaseAdaptor):
 
         return tweets
 
-    def extract_tweet_details(self, url: str, html: str | None = None) -> Tweet | None:
+    def extract_tweet_details(self, url: str, html: str | None = None) -> Tweet:
         """Extract details from a single tweet URL.
 
         Args:
@@ -353,7 +352,7 @@ class TwitterAdaptor(BaseAdaptor):
             html: HTML content (optional)
 
         Returns:
-            Tweet dataclass or None
+            Tweet dataclass
         """
         tweet = Tweet()
 
