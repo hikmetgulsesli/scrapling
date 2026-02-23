@@ -20,8 +20,38 @@ _LAZY_IMPORTS = {
     "AsyncFetcher": ("scrapling.fetchers", "AsyncFetcher"),
     "StealthyFetcher": ("scrapling.fetchers", "StealthyFetcher"),
     "DynamicFetcher": ("scrapling.fetchers", "DynamicFetcher"),
+    # Pipeline
+    "Pipeline": ("scrapling.pipeline", "Pipeline"),
+    "PipelineStage": ("scrapling.pipeline", "PipelineStage"),
+    "FetchStage": ("scrapling.pipeline", "FetchStage"),
+    "ParseStage": ("scrapling.pipeline", "ParseStage"),
+    "SaveStage": ("scrapling.pipeline", "SaveStage"),
+    "PipelineResult": ("scrapling.pipeline", "PipelineResult"),
+    "PipelineMetadata": ("scrapling.pipeline", "PipelineMetadata"),
+    "PipelineError": ("scrapling.pipeline", "PipelineError"),
+    "PipelineContext": ("scrapling.pipeline", "PipelineContext"),
+    "PipelineStageError": ("scrapling.pipeline", "PipelineStageError"),
+    "StageStatus": ("scrapling.pipeline", "StageStatus"),
 }
-__all__ = ["Selector", "Fetcher", "AsyncFetcher", "StealthyFetcher", "DynamicFetcher"]
+__all__ = [
+    "Selector",
+    "Fetcher",
+    "AsyncFetcher",
+    "StealthyFetcher",
+    "DynamicFetcher",
+    # Pipeline
+    "Pipeline",
+    "PipelineStage",
+    "FetchStage",
+    "ParseStage",
+    "SaveStage",
+    "PipelineResult",
+    "PipelineMetadata",
+    "PipelineError",
+    "PipelineContext",
+    "PipelineStageError",
+    "StageStatus",
+]
 
 
 def __getattr__(name: str) -> Any:
@@ -35,4 +65,4 @@ def __getattr__(name: str) -> Any:
 
 def __dir__() -> list[str]:
     """Support for dir() and autocomplete."""
-    return sorted(__all__ + ["fetchers", "parser", "cli", "core", "__author__", "__version__", "__copyright__"])
+    return sorted(__all__ + ["fetchers", "parser", "cli", "core", "pipeline", "__author__", "__version__", "__copyright__"])
