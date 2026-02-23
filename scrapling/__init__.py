@@ -31,6 +31,7 @@ _LAZY_IMPORTS = {
     "PipelineError": ("scrapling.pipeline", "PipelineError"),
     "PipelineContext": ("scrapling.pipeline", "PipelineContext"),
     "PipelineStageError": ("scrapling.pipeline", "PipelineStageError"),
+    "StageStatus": ("scrapling.pipeline", "StageStatus"),
 }
 __all__ = [
     "Selector",
@@ -49,6 +50,7 @@ __all__ = [
     "PipelineError",
     "PipelineContext",
     "PipelineStageError",
+    "StageStatus",
 ]
 
 

@@ -303,14 +303,20 @@ class TestFetchStage:
         assert "No URL" in str(exc_info.value)
     
     def test_fetch_stage_with_context_url(self):
-        """Test fetch stage uses context URL."""
-        stage = FetchStage()
+        """Test fetch stage uses context URL when stage URL is not set."""
+        stage = FetchStage()  # No URL provided to stage
         ctx = PipelineContext()
-        ctx.metadata.url = "https://example.com"
-        
-        with patch("scrapling.pipeline.FetchStage.execute") as mock_execute:
-            # This would need the actual Fetcher to work
-            pass
+        ctx.metadata.url = "https://context.com"
+
+        mock_response = Mock()
+        mock_fetcher = Mock()
+        mock_fetcher.get.return_value = mock_response
+        stage.fetcher = mock_fetcher
+
+        result = stage.execute(ctx)
+
+        assert result == mock_response
+        mock_fetcher.get.assert_called_once_with("https://context.com")
     
     def test_fetch_stage_execute(self):
         """Test fetch stage executes correctly."""
@@ -424,21 +430,21 @@ class TestSaveStage:
         assert "key" in result
         assert "value" in result
     
-    def test_save_stage_to_file(self):
+    def test_save_stage_to_file(self, tmp_path):
         """Test save stage writes to file."""
-        stage = SaveStage(format="json", path="/tmp/test_output.json")
+        output_path = tmp_path / "test_output.json"
+        stage = SaveStage(format="json", path=str(output_path))
         
         ctx = PipelineContext()
         ctx.parsed_data = {"test": True}
         
         result = stage.execute(ctx)
         
-        assert result == "/tmp/test_output.json"
+        assert result == str(output_path)
         
         # Verify file was written
-        with open("/tmp/test_output.json") as f:
-            content = f.read()
-            assert "test" in content
+        content = output_path.read_text()
+        assert "test" in content
     
     def test_save_stage_txt_format(self):
         """Test save stage with text format."""
@@ -554,30 +560,40 @@ class TestPipeline:
         assert result.success is True
         assert result.metadata.is_complete is True
     
-    def test_pipeline_run_with_mocked_fetch(self):
-        """Test pipeline run with mocked fetch."""
+    def test_pipeline_run_with_mocked_stages(self):
+        """Test pipeline run with mocked stages."""
         pipeline = Pipeline()
+
+        # Mock stages
+        mock_fetch_stage = Mock(spec=FetchStage)
+        mock_fetch_stage.name = "fetch"
+        mock_fetch_stage.enabled = True
         
-        # Create a mock response
-        mock_response = Mock()
-        mock_response.ast.return_value.first.return_value = "Test"
+        mock_parse_stage = Mock(spec=ParseStage)
+        mock_parse_stage.name = "parse"
+        mock_parse_stage.enabled = True
+
+        pipeline.add_stage(mock_fetch_stage).add_stage(mock_parse_stage)
+
+        # The context will be modified by the mocked stages
+        def fetch_effect(context):
+            context.raw_response = "raw_content"
+            context._stage_outputs["fetch"] = {"duration": 0.1, "status": "completed"}
         
-        # Create and add a fetch stage with mocked fetcher
-        stage = FetchStage(url="https://example.com")
-        stage._execute = lambda ctx: setattr(ctx, 'raw_response', mock_response) or mock_response
-        
-        # Actually let's just mock the whole run
-        pipeline._stages = []
-        
-        mock_ctx = Mock()
-        mock_ctx._stage_outputs = {}
-        mock_ctx.metadata = PipelineMetadata()
-        
-        # Test the result structure
-        result = PipelineResult()
-        result.metadata.end_time = datetime.now()
-        
+        def parse_effect(context):
+            context.parsed_data = "parsed_data"
+            context._stage_outputs["parse"] = {"duration": 0.05, "status": "completed"}
+
+        mock_fetch_stage.run.side_effect = fetch_effect
+        mock_parse_stage.run.side_effect = parse_effect
+
+        result = pipeline.run()
+
         assert result.success is True
+        assert "fetch" in result.stage_results
+        assert "parse" in result.stage_results
+        mock_fetch_stage.run.assert_called_once()
+        mock_parse_stage.run.assert_called_once()
     
     def test_pipeline_run_handles_error(self):
         """Test pipeline handles errors correctly."""

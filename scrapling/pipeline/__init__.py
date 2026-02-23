@@ -11,6 +11,9 @@ Example:
 
 from __future__ import annotations
 
+import csv
+import io
+import json
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -19,10 +22,9 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 T = TypeVar("T")
-R = TypeVar("R")
 
 
 class StageStatus(Enum):
@@ -46,7 +48,7 @@ class PipelineError:
     """
     stage: str
     message: str
-    exception: Optional[Exception] = None
+    exception: Exception | None = None
     timestamp: datetime = field(default_factory=datetime.now)
 
     def __str__(self) -> str:
@@ -431,6 +433,8 @@ class SaveStage(PipelineStage):
         mode: str = "w"
     ) -> None:
         super().__init__(name="save")
+        if mode not in ('w', 'a', 'wb', 'ab'):
+            raise ValueError(f"Invalid mode: {mode}. Use 'w', 'a', 'wb', or 'ab'.")
         self.format = format
         self.path = path
         self.mode = mode
@@ -451,7 +455,6 @@ class SaveStage(PipelineStage):
                 message="No data to save. Run parse stage first."
             )
 
-        import json
 
         # Handle different formats
         if self.format == "json":
@@ -473,19 +476,17 @@ class SaveStage(PipelineStage):
 
     def _to_json(self, data: Any) -> str:
         """Convert data to JSON string."""
-        import json
 
         # Handle Selectors objects
-        if hasattr(data, "text"):
-            data = data.text()
-        elif hasattr(data, "all"):
-            # It's a Selectors, get all text
+        if hasattr(data, "all"):
+            # It's a Selectors, get all text from each item
             try:
-                data = data.all()
-                if hasattr(data, "text"):
-                    data = [d.text() for d in data]
+                items = data.all()
+                data = [item.text() if hasattr(item, "text") else str(item) for item in items]
             except Exception:
                 pass
+        elif hasattr(data, "text"):
+            data = data.text()
 
         return json.dumps(data, indent=2, default=str, ensure_ascii=False)
 
@@ -506,8 +507,8 @@ class SaveStage(PipelineStage):
 
     def _to_csv(self, data: Any) -> str:
         """Convert data to CSV string."""
-        import csv
-        import io
+
+
 
         output = io.StringIO()
         writer = csv.writer(output)
